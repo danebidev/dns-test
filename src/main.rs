@@ -1,22 +1,21 @@
-use once_cell::sync::Lazy;
-use std::{path::PathBuf, sync::Mutex};
+mod config;
 
-struct Config {
-    config_file: PathBuf 
+#[derive(Debug)]
+struct DNS {
+    name: String,
+    ips: Vec<String>,
 }
 
-static CONFIG: Lazy<Mutex<Config>> = Lazy::new(||  Mutex::new(Config {
-    config_file: PathBuf::from("")
-}));
-
-fn update_path(path: PathBuf) {
-    let mut cfg = CONFIG.lock().unwrap();
-    cfg.config_file = path;
-}
-
-fn get_path() -> PathBuf {
-    CONFIG.lock().unwrap().config_file.clone()
+impl Clone for DNS {
+    fn clone(&self) -> Self {
+        DNS {
+            name: self.name.clone(),
+            ips: self.ips.clone()
+        }
+    }
 }
 
 fn main() {
+    config::init();
+
 }
