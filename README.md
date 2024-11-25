@@ -16,9 +16,13 @@ The binary will be available in `target/release/dnstest-cli`
 
 ## Usage
 
-Just run the `dnstest-cli` binary and it will benchmark a list of default servers.
+```bash
+dnstest-cli [options]
+```
 
-When first run it will also writes that list of servers in `${XDG_CONFIG_HOME}/.config/dnstest-cli/config.toml` or `~/.config/dnstest-cli/config.toml`, if that `XDG_CONFIG_HOME` isn't set. You can then modify the file to add your own DNS servers.
+When run without options it will run benchmarks on a list of default DNS servers.
+
+When first run the current DNS server list will also be written in `${XDG_CONFIG_HOME}/.config/dnstest-cli/config.toml` (or `${HOME}/.config/dnstest-cli/config.toml`, if `XDG_CONFIG_HOME` isn't set) and will be used as server list from the next time. You can then modify the file to add your own DNS servers.
 
 Options:
 
