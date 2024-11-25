@@ -3,26 +3,18 @@ use std::path::PathBuf;
 struct Config {
     config_path: PathBuf,
     dns_servers: Vec<crate::DNS>,
-    test_domains: Vec<String>
+    test_domains: Vec<String>,
 }
 
 static mut CONFIG: Option<Config> = None;
 
-pub fn init() {
-    let mut config_path: PathBuf;
-    match std::env::var("XDG_CONFIG_HOME") {
-        Ok(s) => config_path = PathBuf::from(s),
-        _ => config_path = PathBuf::from(shellexpand::tilde("~/.config").to_string())
-    };
-
-    config_path.push("dnstest-cli/config.toml");
-
+pub fn init(config_path: PathBuf) {
     unsafe {
         if CONFIG.is_none() {
-            CONFIG = Some(Config { 
-                config_path: config_path,
+            CONFIG = Some(Config {
+                config_path,
                 dns_servers: Vec::new(),
-                test_domains: Vec::new()
+                test_domains: Vec::new(),
             });
         }
     }
@@ -37,13 +29,11 @@ pub fn update_path(path: PathBuf) {
 }
 
 pub fn get_path() -> Option<PathBuf> {
-    unsafe { 
-        CONFIG.as_ref().map(|cfg| cfg.config_path.clone())
-    }
+    unsafe { CONFIG.as_ref().map(|cfg| cfg.config_path.clone()) }
 }
 
 pub fn add_dns_server(dns: crate::DNS) {
-    unsafe { 
+    unsafe {
         if let Some(cfg) = &mut CONFIG {
             cfg.dns_servers.push(dns);
         }
@@ -51,9 +41,7 @@ pub fn add_dns_server(dns: crate::DNS) {
 }
 
 pub fn get_dns_servers() -> Option<Vec<crate::DNS>> {
-    unsafe {
-        CONFIG.as_ref().map(|cfg| cfg.dns_servers.clone())
-    }
+    unsafe { CONFIG.as_ref().map(|cfg| cfg.dns_servers.clone()) }
 }
 
 pub fn add_test_domain(domain: String) {
@@ -65,7 +53,5 @@ pub fn add_test_domain(domain: String) {
 }
 
 pub fn get_test_domains() -> Option<Vec<String>> {
-    unsafe {
-        CONFIG.as_ref().map(|cfg| cfg.test_domains.clone())
-    }
+    unsafe { CONFIG.as_ref().map(|cfg| cfg.test_domains.clone()) }
 }
