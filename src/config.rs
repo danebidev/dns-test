@@ -24,6 +24,7 @@ pub fn init(config_path: PathBuf, sort: crate::SortType, queries: i32, timeout: 
             });
         }
     }
+    load_data();
 }
 
 pub fn get_path() -> Option<PathBuf> {
@@ -72,4 +73,24 @@ pub fn add_test_domain(domain: String) {
 
 pub fn get_test_domains() -> Option<Vec<String>> {
     unsafe { CONFIG.as_ref().map(|cfg| cfg.test_domains.clone()) }
+}
+
+fn load_default_data() {
+    add_dns_server(crate::DNS {
+        name: "google".to_string(),
+        ips: vec!["8.8.8.8".to_string(), "8.8.4.4".into()],
+    });
+    add_dns_server(crate::DNS {
+        name: "cloudfare".to_string(),
+        ips: vec!["1.1.1.1".to_string(), "1.0.0.1".into()],
+    });
+
+    add_test_domain("google.com".to_string());
+    add_test_domain("facebook.com".to_string());
+    add_test_domain("amazon.com".to_string());
+    add_test_domain("example.com".to_string());
+}
+
+fn load_data() {
+    load_default_data();
 }
