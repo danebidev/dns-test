@@ -17,6 +17,7 @@ impl Clone for DNS {
     }
 }
 
+#[derive(Copy, Clone)]
 enum SortType {
     Average,
     Minimum,
@@ -56,62 +57,61 @@ fn main() {
         if !arg.starts_with("--") {
             println!("Unrecognized option '{arg}'");
             return;
-        } else {
-            let arg_name = &arg[2..];
+        }
+        let arg_name = &arg[2..];
 
-            match arg_name {
-                "config" => {
-                    let next_arg = get_next_arg(&args, &mut i);
+        match arg_name {
+            "config" => {
+                let next_arg = get_next_arg(&args, &mut i);
 
-                    let path = next_arg.unwrap_or_else(|| std::process::exit(1));
-                    config_path = PathBuf::from(shellexpand::tilde(path).to_string());
-                }
-                "sort" => {
-                    let next_arg = get_next_arg(&args, &mut i);
+                let path = next_arg.unwrap_or_else(|| std::process::exit(1));
+                config_path = PathBuf::from(shellexpand::tilde(path).to_string());
+            }
+            "sort" => {
+                let next_arg = get_next_arg(&args, &mut i);
 
-                    let sort_type = next_arg.unwrap_or_else(|| std::process::exit(1));
-                    match sort_type {
-                        "avg" => sort = SortType::Average,
-                        "min" => sort = SortType::Minimum,
-                        "max" => sort = SortType::Maximum,
-                        "lost" => sort = SortType::Lost,
-                        _ => {
-                            println!("Unrecognized parameter to --sort option '{}'", sort_type);
-                            std::process::exit(1);
-                        }
+                let sort_type = next_arg.unwrap_or_else(|| std::process::exit(1));
+                match sort_type {
+                    "avg" => sort = SortType::Average,
+                    "min" => sort = SortType::Minimum,
+                    "max" => sort = SortType::Maximum,
+                    "lost" => sort = SortType::Lost,
+                    _ => {
+                        println!("Unrecognized parameter to --sort option '{}'", sort_type);
+                        std::process::exit(1);
                     }
-                }
-                "queries" => {
-                    let next_arg = get_next_arg(&args, &mut i);
-                    let next_arg = next_arg.unwrap_or_else(|| std::process::exit(1));
-
-                    match next_arg.parse::<i32>() {
-                        Ok(parsed) => queries = parsed,
-                        Err(_) => {
-                            println!("Error parsing parameter to --query option '{}'", next_arg)
-                        }
-                    }
-                }
-                "timeout" => {
-                    let next_arg = get_next_arg(&args, &mut i);
-                    let next_arg = next_arg.unwrap_or_else(|| std::process::exit(1));
-
-                    match next_arg.parse::<f64>() {
-                        Ok(parsed) => timeout = parsed,
-                        Err(_) => {
-                            println!("Error parsing parameter to --query option '{}'", next_arg)
-                        }
-                    }
-                }
-                _ => {
-                    println!("Unrecognized option '{arg}'");
-                    return;
                 }
             }
-        }
+            "queries" => {
+                let next_arg = get_next_arg(&args, &mut i);
+                let next_arg = next_arg.unwrap_or_else(|| std::process::exit(1));
 
-        i += 1;
+                match next_arg.parse::<i32>() {
+                    Ok(parsed) => queries = parsed,
+                    Err(_) => {
+                        println!("Error parsing parameter to --query option '{}'", next_arg)
+                    }
+                }
+            }
+            "timeout" => {
+                let next_arg = get_next_arg(&args, &mut i);
+                let next_arg = next_arg.unwrap_or_else(|| std::process::exit(1));
+
+                match next_arg.parse::<f64>() {
+                    Ok(parsed) => timeout = parsed,
+                    Err(_) => {
+                        println!("Error parsing parameter to --query option '{}'", next_arg)
+                    }
+                }
+            }
+            _ => {
+                println!("Unrecognized option '{arg}'");
+                return;
+            }
+        }
     }
+
+    i += 1;
 
     config::init(config_path, sort, queries, timeout);
 }

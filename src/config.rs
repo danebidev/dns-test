@@ -1,7 +1,5 @@
 use std::path::PathBuf;
 
-use crate::SortType;
-
 struct Config {
     config_path: PathBuf,
     sort: crate::SortType,
@@ -13,7 +11,7 @@ struct Config {
 
 static mut CONFIG: Option<Config> = None;
 
-pub fn init(config_path: PathBuf, sort: SortType, queries: i32, timeout: f64) {
+pub fn init(config_path: PathBuf, sort: crate::SortType, queries: i32, timeout: f64) {
     unsafe {
         if CONFIG.is_none() {
             CONFIG = Some(Config {
@@ -28,6 +26,10 @@ pub fn init(config_path: PathBuf, sort: SortType, queries: i32, timeout: f64) {
     }
 }
 
+pub fn get_path() -> Option<PathBuf> {
+    unsafe { CONFIG.as_ref().map(|cfg| cfg.config_path.clone()) }
+}
+
 pub fn update_path(path: PathBuf) {
     unsafe {
         if let Some(cfg) = &mut CONFIG {
@@ -36,8 +38,20 @@ pub fn update_path(path: PathBuf) {
     }
 }
 
-pub fn get_path() -> Option<PathBuf> {
-    unsafe { CONFIG.as_ref().map(|cfg| cfg.config_path.clone()) }
+pub fn get_sort_type() -> Option<crate::SortType> {
+    unsafe { CONFIG.as_ref().map(|cfg| cfg.sort) }
+}
+
+pub fn get_queries() -> Option<i32> {
+    unsafe { CONFIG.as_ref().map(|cfg| cfg.queries) }
+}
+
+pub fn get_timeout() -> Option<f64> {
+    unsafe { CONFIG.as_ref().map(|cfg| cfg.timeout) }
+}
+
+pub fn get_dns_servers() -> Option<Vec<crate::DNS>> {
+    unsafe { CONFIG.as_ref().map(|cfg| cfg.dns_servers.clone()) }
 }
 
 pub fn add_dns_server(dns: crate::DNS) {
@@ -46,10 +60,6 @@ pub fn add_dns_server(dns: crate::DNS) {
             cfg.dns_servers.push(dns);
         }
     }
-}
-
-pub fn get_dns_servers() -> Option<Vec<crate::DNS>> {
-    unsafe { CONFIG.as_ref().map(|cfg| cfg.dns_servers.clone()) }
 }
 
 pub fn add_test_domain(domain: String) {
