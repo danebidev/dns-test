@@ -3,7 +3,7 @@ use std::path::PathBuf;
 struct Config {
     config_path: PathBuf,
     sort: crate::SortType,
-    queries: i32,
+    queries: u64,
     timeout: f64,
     dns_servers: Vec<crate::DNS>,
     test_domains: Vec<String>,
@@ -11,7 +11,7 @@ struct Config {
 
 static mut CONFIG: Option<Config> = None;
 
-pub fn init(config_path: PathBuf, sort: crate::SortType, queries: i32, timeout: f64) {
+pub fn init(config_path: PathBuf, sort: crate::SortType, queries: u64, timeout: f64) {
     unsafe {
         if CONFIG.is_none() {
             CONFIG = Some(Config {
@@ -43,7 +43,7 @@ pub fn get_sort_type() -> Option<crate::SortType> {
     unsafe { CONFIG.as_ref().map(|cfg| cfg.sort) }
 }
 
-pub fn get_queries() -> Option<i32> {
+pub fn get_queries() -> Option<u64> {
     unsafe { CONFIG.as_ref().map(|cfg| cfg.queries) }
 }
 
@@ -55,7 +55,11 @@ pub fn get_dns_servers() -> Option<Vec<crate::DNS>> {
     unsafe { CONFIG.as_ref().map(|cfg| cfg.dns_servers.clone()) }
 }
 
-pub fn add_dns_server(dns: crate::DNS) {
+pub fn add_dns_server(mut dns: crate::DNS) {
+    for ip in dns.ips.iter_mut() {
+        ip.push_str(":53");
+    }
+
     unsafe {
         if let Some(cfg) = &mut CONFIG {
             cfg.dns_servers.push(dns);
