@@ -146,6 +146,9 @@ fn dns_lookup(server: &DNS, host: &str) -> u128 {
     }
 }
 
+fn test() {
+println!("test");
+
 fn run_benchmark() {
     let host = "example.org";
     for server in config::get_dns_servers().unwrap() {
@@ -156,7 +159,7 @@ fn run_benchmark() {
         let results = Arc::new(Mutex::new(Vec::new()));
         let completed_lookups = Arc::new(AtomicU64::new(0));
 
-        for i in 0..max_concurrent_threads {
+        for _ in 0..max_concurrent_threads {
             let results_clone = Arc::clone(&results);
             let completed_lookups_clone = Arc::clone(&completed_lookups);
             let server = server.clone();
@@ -166,7 +169,6 @@ fn run_benchmark() {
                     let rtt = dns_lookup(&server, host);
                     let mut results = results_clone.lock().unwrap();
                     results.push(rtt);
-                    println!("Thread: {i}");
 
                     completed_lookups_clone.fetch_add(1, Ordering::SeqCst);
                 }
