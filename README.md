@@ -26,6 +26,7 @@ When first run the current DNS server list will also be written in `${XDG_CONFIG
 
 Options:
 
+- `--config`: Config file path 
 - `--queries`: Number of queries (default: 100)
 - `--servers`: Add custom DNS server IPs (comma-separated)
 - `--sort`: Sort servers based on avg, min, max or lost% (default: avg)

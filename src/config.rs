@@ -1,18 +1,22 @@
 use std::path::PathBuf;
 
+use crate::SortType;
+
 struct Config {
     config_path: PathBuf,
+    sort: crate::SortType,
     dns_servers: Vec<crate::DNS>,
     test_domains: Vec<String>,
 }
 
 static mut CONFIG: Option<Config> = None;
 
-pub fn init(config_path: PathBuf) {
+pub fn init(config_path: PathBuf, sort: SortType) {
     unsafe {
         if CONFIG.is_none() {
             CONFIG = Some(Config {
                 config_path,
+                sort,
                 dns_servers: Vec::new(),
                 test_domains: Vec::new(),
             });
