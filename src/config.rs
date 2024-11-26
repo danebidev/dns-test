@@ -5,18 +5,22 @@ use crate::SortType;
 struct Config {
     config_path: PathBuf,
     sort: crate::SortType,
+    queries: i32,
+    timeout: f64,
     dns_servers: Vec<crate::DNS>,
     test_domains: Vec<String>,
 }
 
 static mut CONFIG: Option<Config> = None;
 
-pub fn init(config_path: PathBuf, sort: SortType) {
+pub fn init(config_path: PathBuf, sort: SortType, queries: i32, timeout: f64) {
     unsafe {
         if CONFIG.is_none() {
             CONFIG = Some(Config {
                 config_path,
                 sort,
+                queries,
+                timeout,
                 dns_servers: Vec::new(),
                 test_domains: Vec::new(),
             });

@@ -47,6 +47,7 @@ fn main() {
 
     let mut sort: SortType = SortType::Average;
     let mut queries: i32 = 100;
+    let mut timeout: f64 = 100;
 
     let mut i = 0;
     while i < args.len() {
@@ -91,7 +92,17 @@ fn main() {
                         }
                     }
                 }
-                // Rest of the options
+                "timeout" => {
+                    let next_arg = get_next_arg(&args, &mut i);
+                    let next_arg = next_arg.unwrap_or_else(|| std::process::exit(1));
+
+                    match next_arg.parse::<f64>() {
+                        Ok(parsed) => timeout = parsed,
+                        Err(_) => {
+                            println!("Error parsing parameter to --query option '{}'", next_arg)
+                        }
+                    }
+                }
                 _ => {
                     println!("Unrecognized option '{arg}'");
                     return;
@@ -102,5 +113,5 @@ fn main() {
         i += 1;
     }
 
-    config::init(config_path, sort, queries);
+    config::init(config_path, sort, queries, timeout);
 }
