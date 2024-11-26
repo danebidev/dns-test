@@ -109,9 +109,9 @@ fn main() {
                 return;
             }
         }
-    }
 
-    i += 1;
+        i += 1;
+    }
 
     config::init(config_path, sort, queries, timeout);
 }
