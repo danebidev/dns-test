@@ -47,7 +47,7 @@ fn main() {
 
     let mut sort: SortType = SortType::Average;
     let mut queries: i32 = 100;
-    let mut timeout: f64 = 100;
+    let mut timeout: f64 = 2.0;
 
     let mut i = 0;
     while i < args.len() {
