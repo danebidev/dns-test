@@ -1,8 +1,11 @@
 use std::{
-    net::SocketAddr, path::PathBuf, sync::{
+    net::SocketAddr,
+    path::PathBuf,
+    sync::{
         atomic::{AtomicU64, Ordering},
         Arc, Mutex,
-    }, time::Instant
+    },
+    time::Instant,
 };
 use trust_dns_resolver::{
     config::{NameServerConfig, Protocol, ResolverConfig, ResolverOpts},
@@ -57,7 +60,6 @@ fn main() {
 
     let mut sort: SortType = SortType::Average;
     let mut queries: u64 = 100;
-    let mut timeout: f64 = 2.0;
 
     let mut i = 0;
     while i < args.len() {
@@ -102,17 +104,6 @@ fn main() {
                     }
                 }
             }
-            "timeout" => {
-                let next_arg = get_next_arg(&args, &mut i);
-                let next_arg = next_arg.unwrap_or_else(|| std::process::exit(1));
-
-                match next_arg.parse::<f64>() {
-                    Ok(parsed) => timeout = parsed,
-                    Err(_) => {
-                        println!("Error parsing parameter to --query option '{}'", next_arg)
-                    }
-                }
-            }
             _ => {
                 println!("Unrecognized option '{arg}'");
                 return;
@@ -122,14 +113,16 @@ fn main() {
         i += 1;
     }
 
-    config::init(config_path, sort, queries, timeout);
+    config::init(config_path, sort, queries);
     run_benchmark();
 }
 
 fn dns_lookup(server: &DNS, host: &str) -> u128 {
     let mut config = ResolverConfig::default();
     config.add_name_server(NameServerConfig {
-        socket_addr: server.ips[0].parse::<SocketAddr>().expect("Unable to parse socket address"),
+        socket_addr: server.ips[0]
+            .parse::<SocketAddr>()
+            .expect("Unable to parse socket address"),
         protocol: Protocol::Udp,
         tls_dns_name: None,
         trust_negative_responses: false,
@@ -145,9 +138,6 @@ fn dns_lookup(server: &DNS, host: &str) -> u128 {
         Err(_) => u128::MAX,
     }
 }
-
-fn test() {
-println!("test");
 
 fn run_benchmark() {
     let host = "example.org";

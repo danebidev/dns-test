@@ -4,21 +4,19 @@ struct Config {
     config_path: PathBuf,
     sort: crate::SortType,
     queries: u64,
-    timeout: f64,
     dns_servers: Vec<crate::DNS>,
     test_domains: Vec<String>,
 }
 
 static mut CONFIG: Option<Config> = None;
 
-pub fn init(config_path: PathBuf, sort: crate::SortType, queries: u64, timeout: f64) {
+pub fn init(config_path: PathBuf, sort: crate::SortType, queries: u64) {
     unsafe {
         if CONFIG.is_none() {
             CONFIG = Some(Config {
                 config_path,
                 sort,
                 queries,
-                timeout,
                 dns_servers: Vec::new(),
                 test_domains: Vec::new(),
             });
@@ -45,10 +43,6 @@ pub fn get_sort_type() -> Option<crate::SortType> {
 
 pub fn get_queries() -> Option<u64> {
     unsafe { CONFIG.as_ref().map(|cfg| cfg.queries) }
-}
-
-pub fn get_timeout() -> Option<f64> {
-    unsafe { CONFIG.as_ref().map(|cfg| cfg.timeout) }
 }
 
 pub fn get_dns_servers() -> Option<Vec<crate::DNS>> {
