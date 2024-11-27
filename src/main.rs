@@ -29,6 +29,13 @@ impl Clone for DNS {
     }
 }
 
+#[derive(Debug)]
+struct BenchmarkResult {
+    min: u128,
+    max: u128,
+    avg: f64,
+}
+
 #[derive(Copy, Clone)]
 enum SortType {
     Average,
@@ -118,7 +125,7 @@ fn main() {
 }
 
 fn dns_lookup(server: &DNS, host: &str) -> u128 {
-    let mut config = ResolverConfig::default();
+    let mut config = ResolverConfig::new();
     config.add_name_server(NameServerConfig {
         socket_addr: server.ips[0]
             .parse::<SocketAddr>()
@@ -134,45 +141,77 @@ fn dns_lookup(server: &DNS, host: &str) -> u128 {
     let start_time = Instant::now();
 
     match resolver.lookup_ip(host) {
-        Ok(_) => start_time.elapsed().as_millis(),
+        Ok(_) => start_time.elapsed().as_micros(),
         Err(_) => u128::MAX,
     }
 }
 
-fn run_benchmark() {
-    let host = "example.org";
-    for server in config::get_dns_servers().unwrap() {
-        let total_lookups = config::get_queries().unwrap();
-        let max_concurrent_threads = std::cmp::min(10, total_lookups); // TODO put this in config and get it from user
-
-        let mut handles = vec![];
-        let results = Arc::new(Mutex::new(Vec::new()));
-        let completed_lookups = Arc::new(AtomicU64::new(0));
-
-        for _ in 0..max_concurrent_threads {
-            let results_clone = Arc::clone(&results);
-            let completed_lookups_clone = Arc::clone(&completed_lookups);
-            let server = server.clone();
-
-            let handle = std::thread::spawn(move || {
-                while completed_lookups_clone.load(Ordering::SeqCst) < total_lookups {
-                    let rtt = dns_lookup(&server, host);
-                    let mut results = results_clone.lock().unwrap();
-                    results.push(rtt);
-
-                    completed_lookups_clone.fetch_add(1, Ordering::SeqCst);
-                }
-            });
-
-            handles.push(handle);
+fn print_progress_bar(done: usize, total: usize) {
+    let to_print = 20 * done / total;
+    let mut out = "".to_string();
+    for i in 0..20 {
+        if i < to_print {
+            out.push_str("=");
+        } else {
+            out.push_str(" ");
         }
-
-        for handle in handles {
-            handle.join().unwrap();
-        }
-
-        let results = results.lock().unwrap();
-        println!("{:?}", results);
-        break;
     }
+    print!("\r[{}] {}% Complete", out, 100 * done / total);
+}
+
+fn run_benchmark() {
+    let total_lookups = config::get_queries().unwrap();
+    let max_concurrent_threads = std::cmp::min(10, total_lookups); // TODO put this in config and get it from user
+    let servers = &config::get_dns_servers().unwrap();
+    let hosts = &config::get_test_domains().unwrap();
+    let mut end_result: Vec<BenchmarkResult> = Vec::new();
+
+    println!("Testing default DNS servers...");
+
+    for (i, server) in servers.into_iter().enumerate() {
+        print_progress_bar(i, servers.len());
+        let results = Arc::new(Mutex::new(Vec::new()));
+        for host in hosts {
+            let mut handles = vec![];
+            let completed_lookups = Arc::new(Mutex::new(AtomicU64::new(0)));
+
+            for _ in 0..max_concurrent_threads {
+                let results = Arc::clone(&results);
+                let completed_lookups = Arc::clone(&completed_lookups);
+                let host = host.clone();
+                let server = server.clone();
+
+                let handle = std::thread::spawn(move || {
+                    while completed_lookups.lock().unwrap().load(Ordering::SeqCst) < total_lookups {
+                        completed_lookups
+                            .lock()
+                            .unwrap()
+                            .fetch_add(1, Ordering::SeqCst);
+                        let rtt = dns_lookup(&server, &host);
+                        let mut results = results.lock().unwrap();
+                        results.push(rtt);
+                    }
+                });
+
+                handles.push(handle);
+            }
+
+            for handle in handles {
+                handle.join().unwrap();
+            }
+        }
+        let results = results.lock().unwrap();
+        let mut sum: f64 = 0.0;
+        for n in results.iter() {
+            sum += *n as f64;
+        }
+
+        end_result.push(BenchmarkResult {
+            min: *results.iter().min().unwrap(),
+            max: *results.iter().max().unwrap(),
+            avg: sum / results.len() as f64,
+        });
+    }
+    print_progress_bar(servers.len(), servers.len());
+    println!();
 }
