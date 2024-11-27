@@ -38,12 +38,12 @@ Testing default DNS servers...
 [====================] 100% Complete
 
 Results:
-Provider   IP              Avg (μs)   Min    Max
+Provider   IP             Avg (μs)   Min    Max
 ------------------------------------------------
 Cloudflare 1.1.1.1        14.3       8.1    45.2
-           1.0.0.1        15.1       8.3    47.1
+           1.0.0.1        
 Google     8.8.8.8        16.2       9.2    51.3
-           8.8.4.4        16.8       9.4    52.8
+           8.8.4.4        
 Quad9      9.9.9.9        18.4       10.1   55.4
 OpenDNS    208.67.222.222 19.1       10.8   58.2
 ```

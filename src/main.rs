@@ -1,4 +1,5 @@
 use std::{
+    cmp,
     net::SocketAddr,
     path::PathBuf,
     sync::{
@@ -30,7 +31,8 @@ impl Clone for DNS {
 }
 
 #[derive(Debug)]
-struct BenchmarkResult {
+struct BenchmarkResult<'a> {
+    dns: &'a DNS,
     min: u128,
     max: u128,
     avg: f64,
@@ -207,11 +209,46 @@ fn run_benchmark() {
         }
 
         end_result.push(BenchmarkResult {
+            dns: &server,
             min: *results.iter().min().unwrap(),
             max: *results.iter().max().unwrap(),
             avg: sum / results.len() as f64,
         });
     }
     print_progress_bar(servers.len(), servers.len());
-    println!();
+    println!("\n\nResults:");
+    print_table(end_result);
+}
+
+fn print_header_section(text: &str, len: usize) {
+    let spaces = len - text.len();
+    print!("{}", text);
+    for _ in 0..spaces {
+        print!(" ")
+    }
+}
+
+fn print_table(results: Vec<BenchmarkResult>) {
+    // At least 2 spaces if it's from the title,
+    // 1 space if from the field
+    let mut name_length = "Provider".len() + 2;
+    let mut ip_length = "0.0.0.0".len() + 1;
+    let mut avg_length = "Avg (us)".len() + 2;
+    let mut min_length = "Min".len() + 2;
+    let mut max_length = "Max".len() + 2;
+    for result in &results {
+        name_length = cmp::max(name_length, result.dns.name.len() + 1);
+        avg_length = cmp::max(avg_length, result.avg.to_string().len() + 1);
+        min_length = cmp::max(min_length, result.min.to_string().len() + 1);
+        max_length = cmp::max(max_length, result.max.to_string().len() + 1);
+        for ip in &result.dns.ips {
+            ip_length = cmp::max(ip_length, ip.len() + 1);
+        }
+    }
+
+    print_header_section("Provider", name_length);
+    print_header_section("IP", ip_length);
+    print_header_section("Avg (μs)", avg_length);
+    print_header_section("Min", min_length);
+    print_header_section("Max", max_length);
 }
