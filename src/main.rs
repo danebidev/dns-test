@@ -220,11 +220,37 @@ fn run_benchmark() {
     print_table(end_result);
 }
 
-fn print_header_section(text: &str, len: usize) {
+fn print_section(text: &str, len: usize) {
     let spaces = len - text.len();
     print!("{}", text);
     for _ in 0..spaces {
         print!(" ")
+    }
+}
+
+fn strip_port_number(ip: &str) -> &str {
+    &ip[..ip.len() - 3]
+}
+
+fn print_results_line(
+    result: BenchmarkResult,
+    name_length: usize,
+    ip_length: usize,
+    avg_length: usize,
+    min_length: usize,
+) {
+    print_section(&result.dns.name, name_length);
+    print_section(strip_port_number(&result.dns.ips[0]), ip_length);
+    print_section(&format!("{:.2}", result.avg), avg_length);
+    print_section(&result.min.to_string(), min_length);
+    print_section(&result.max.to_string(), result.max.to_string().len());
+
+    for i in 1..result.dns.ips.len() {
+        println!();
+        for _ in 0..name_length {
+            print!(" ");
+        }
+        print!("{}", strip_port_number(&result.dns.ips[i]));
     }
 }
 
@@ -235,20 +261,31 @@ fn print_table(results: Vec<BenchmarkResult>) {
     let mut ip_length = "0.0.0.0".len() + 1;
     let mut avg_length = "Avg (us)".len() + 2;
     let mut min_length = "Min".len() + 2;
-    let mut max_length = "Max".len() + 2;
+    let mut max_length = "Max".len();
     for result in &results {
         name_length = cmp::max(name_length, result.dns.name.len() + 1);
-        avg_length = cmp::max(avg_length, result.avg.to_string().len() + 1);
+        let avg_name = format!("{:.2}", result.avg);
+        avg_length = cmp::max(avg_length, avg_name.len() + 1);
         min_length = cmp::max(min_length, result.min.to_string().len() + 1);
-        max_length = cmp::max(max_length, result.max.to_string().len() + 1);
+        max_length = cmp::max(max_length, result.max.to_string().len());
         for ip in &result.dns.ips {
             ip_length = cmp::max(ip_length, ip.len() + 1);
         }
     }
 
-    print_header_section("Provider", name_length);
-    print_header_section("IP", ip_length);
-    print_header_section("Avg (μs)", avg_length);
-    print_header_section("Min", min_length);
-    print_header_section("Max", max_length);
+    print_section("Provider", name_length);
+    print_section("IP", ip_length);
+    print_section("Avg (μs)", avg_length + 1); // + 1 to account for the non-ascii character
+    print_section("Min", min_length);
+    print_section("Max\n", "Max\n".len());
+
+    for _ in 0..name_length + ip_length + avg_length + min_length + max_length {
+        print!("-");
+    }
+    println!();
+
+    for result in results {
+        print_results_line(result, name_length, ip_length, avg_length, min_length);
+        println!();
+    }
 }
