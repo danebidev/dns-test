@@ -38,7 +38,7 @@ struct BenchmarkResult<'a> {
     avg: f64,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 enum SortType {
     Average,
     Minimum,
@@ -163,58 +163,70 @@ fn print_progress_bar(done: usize, total: usize) {
 
 fn run_benchmark() {
     let total_lookups = config::get_queries().unwrap();
-    let max_concurrent_threads = std::cmp::min(10, total_lookups); // TODO put this in config and get it from user
+    let max_concurrent_threads = std::cmp::min(10, total_lookups);
     let servers = &config::get_dns_servers().unwrap();
-    let hosts = &config::get_test_domains().unwrap();
+    let hosts = config::get_test_domains().unwrap();
     let mut end_result: Vec<BenchmarkResult> = Vec::new();
 
     println!("Testing default DNS servers...");
 
     for (i, server) in servers.into_iter().enumerate() {
         print_progress_bar(i, servers.len());
-        let results = Arc::new(Mutex::new(Vec::new()));
-        for host in hosts {
-            let mut handles = vec![];
-            let completed_lookups = Arc::new(Mutex::new(AtomicU64::new(0)));
 
-            for _ in 0..max_concurrent_threads {
-                let results = Arc::clone(&results);
-                let completed_lookups = Arc::clone(&completed_lookups);
-                let host = host.clone();
-                let server = server.clone();
+        let server_results: Arc<Mutex<Vec<u128>>> = Arc::new(Mutex::new(Vec::new()));
 
-                let handle = std::thread::spawn(move || {
-                    while completed_lookups.lock().unwrap().load(Ordering::SeqCst) < total_lookups {
-                        completed_lookups
-                            .lock()
-                            .unwrap()
-                            .fetch_add(1, Ordering::SeqCst);
-                        let rtt = dns_lookup(&server, &host);
-                        let mut results = results.lock().unwrap();
-                        results.push(rtt);
+        let hosts_queue: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(hosts.clone()));
+        let completed_lookups = Arc::new(AtomicU64::new(0));
+
+        let mut handles = vec![];
+        for _ in 0..max_concurrent_threads {
+            let server = server.clone();
+            let hosts_queue = Arc::clone(&hosts_queue);
+            let server_results = Arc::clone(&server_results);
+            let completed_lookups = Arc::clone(&completed_lookups);
+
+            let handle = std::thread::spawn(move || loop {
+                let host = {
+                    let mut queue = hosts_queue.lock().unwrap();
+                    if queue.is_empty() {
+                        break;
                     }
-                });
+                    queue.pop().unwrap()
+                };
 
-                handles.push(handle);
-            }
+                for _ in 0..total_lookups {
+                    let rtt = dns_lookup(&server, &host);
 
-            for handle in handles {
-                handle.join().unwrap();
-            }
+                    let mut results = server_results.lock().unwrap();
+                    results.push(rtt);
+                }
+
+                completed_lookups.fetch_add(1, Ordering::SeqCst);
+            });
+
+            handles.push(handle);
         }
-        let results = results.lock().unwrap();
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+
+        let results = server_results.lock().unwrap();
         let mut sum: f64 = 0.0;
-        for n in results.iter() {
-            sum += *n as f64;
-        }
 
         end_result.push(BenchmarkResult {
-            dns: &server,
-            min: *results.iter().min().unwrap(),
-            max: *results.iter().max().unwrap(),
-            avg: sum / results.len() as f64,
+            dns: server,
+            min: *results.iter().min().unwrap_or(&0),
+            max: *results.iter().max().unwrap_or(&0),
+            avg: {
+                for n in results.iter() {
+                    sum += *n as f64;
+                }
+                sum / results.len() as f64
+            },
         });
     }
+
     print_progress_bar(servers.len(), servers.len());
     println!("\n\nResults:");
     print_table(end_result);
