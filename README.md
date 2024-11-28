@@ -29,7 +29,7 @@ Options:
 - `--config`: Config file path 
 - `--queries`: Number of queries (default: 100)
 - `--servers`: Add custom DNS server IPs (comma-separated)
-- `--sort`: Sort servers based on avg, min, max or lost% (default: avg)
+- `--sort`: Sort servers based on avg, min or max (default: avg)
 
 ## Example Output
 

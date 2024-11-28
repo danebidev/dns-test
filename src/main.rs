@@ -43,7 +43,6 @@ enum SortType {
     Average,
     Minimum,
     Maximum,
-    Lost,
 }
 
 fn get_next_arg<'a>(args: &'a Vec<String>, i: &mut usize) -> Option<&'a str> {
@@ -95,7 +94,6 @@ fn main() {
                     "avg" => sort = SortType::Average,
                     "min" => sort = SortType::Minimum,
                     "max" => sort = SortType::Maximum,
-                    "lost" => sort = SortType::Lost,
                     _ => {
                         println!("Unrecognized parameter to --sort option '{}'", sort_type);
                         std::process::exit(1);
@@ -266,7 +264,7 @@ fn print_results_line(
     }
 }
 
-fn print_table(results: Vec<BenchmarkResult>) {
+fn print_table(mut results: Vec<BenchmarkResult>) {
     // At least 2 spaces if it's from the title,
     // 1 space if from the field
     let mut name_length = "Provider".len() + 2;
@@ -295,6 +293,18 @@ fn print_table(results: Vec<BenchmarkResult>) {
         print!("-");
     }
     println!();
+
+    match config::get_sort_type().unwrap() {
+        SortType::Average => {
+            results.sort_by(|a: &BenchmarkResult, b: &BenchmarkResult| a.avg.total_cmp(&b.avg))
+        }
+        SortType::Minimum => {
+            results.sort_by(|a: &BenchmarkResult, b: &BenchmarkResult| a.min.cmp(&b.min))
+        }
+        SortType::Maximum => {
+            results.sort_by(|a: &BenchmarkResult, b: &BenchmarkResult| a.max.cmp(&b.max))
+        }
+    }
 
     for result in results {
         print_results_line(result, name_length, ip_length, avg_length, min_length);

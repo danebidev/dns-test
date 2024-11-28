@@ -95,8 +95,12 @@ pub fn add_dns_server(mut dns: crate::DNS) {
     }
 }
 
-pub fn add_test_domain(domain: String) {
+pub fn add_test_domain(mut domain: String) {
     ensure_initialized();
+
+    if domain.ends_with(".") {
+        domain.push_str(".");
+    }
     if let Ok(mut config) = GLOBAL_CONFIG.write() {
         if let Some(cfg) = config.as_mut() {
             cfg.test_domains.push(domain)
@@ -115,11 +119,11 @@ pub fn get_test_domains() -> Option<Vec<String>> {
 
 fn load_default_data() {
     add_dns_server(crate::DNS {
-        name: "google".to_string(),
+        name: "Google".to_string(),
         ips: vec!["8.8.8.8".to_string(), "8.8.4.4".into()],
     });
     add_dns_server(crate::DNS {
-        name: "cloudfare".to_string(),
+        name: "Cloudflare".to_string(),
         ips: vec!["1.1.1.1".to_string(), "1.0.0.1".into()],
     });
 
